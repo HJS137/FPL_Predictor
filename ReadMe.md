@@ -34,3 +34,38 @@ Its important to read values from the API but verify against observed points.
 At this stage there is useful constaints confirmed such as squad total spend, squad team lmit and max extra free
 
 
+
+### Part 2 - 30/08/2026 
+
+Building the `teams` table. **SQLite, 20 rows loaded and queried back**
+
+#### Files
+
+- `explore.py` — inspects the raw API response
+- `build_db.py` — creates `fpl.db` and loads teams
+
+#### Data quality note
+
+All `strength_attack_*` and `strength_defence_*` fields are 0 for every club.
+`played: 0` suggests they aren't seeded this early in the season rather than
+removed. `strength_overall_*` is populated but on a 1–5 scale, not the
+~1000–1400 of previous seasons. Columns kept. **Re-check around GW6.**
+
+
+**Built the `players` table.** 622 rows, position decoded from
+`element_types`. Joined `players` to `teams` to read club names.
+
+Verified against deadline day: Emiliano Martinez showed as Chelsea within hours
+of the transfer. Confirms the loader and the join are correct, and that
+overwriting `team_id` each run is the right call.
+
+**Built `player_snapshots`.** Append-only, composite key
+`(snapshot_ts, player_id)`. One timestamp per run, generated before the loop so
+all 622 rows share it. First snapshot taken 30 Aug 2026.
+
+Captures the fields that overwrite themselves: `status`, `news`,
+`chance_of_playing_next_round`. Everything else in the API is recoverable; these
+are not. **Must run weekly.**
+
+First run caught Abraham at a 50% flag — the kind of observation that disappears
+entirely once he's fit.
